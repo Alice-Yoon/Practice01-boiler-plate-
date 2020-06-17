@@ -3,6 +3,7 @@ const app = express();
 const port = 5000;
 
 const { User } = require('./models/User');
+const { Favorite } = require('./models/Favorite');
 const { auth } = require('./middleware/auth');
 const config = require('./config/key');
 const cookieParser = require('cookie-parser');
@@ -112,6 +113,78 @@ app.get('/api/users/logout', auth, (req, res) => {
 
 })
 
+
+// -----------<< Favorite >>------------
+// Favorite Number 가져오기 Route
+app.get('/api/favorite/favoriteNumber', (req, res) => {
+
+    // (1) mongoDB에서 favorite 숫자를 가져오기
+    Favorite.find({ "movieId": req.body.movieId })
+        .exec((err, info) => {
+            if (err) return res.status(400).send(err)
+
+            // 'info'에 favorite 속 저 movieId로 등록된 것들의 array가 담겨 옴.
+
+            // (2) 그 다음에 프론트에 다시 숫자 정보 보내주기
+            res.status(200).json({ success: true, favoriteNumber: info.length })
+        })
+})
+
+// 내가 해당 영화를 Favorite 했는지 여부 가져오기 Route
+app.get('/api/favorite/favorited', (req, res) => {
+
+    Favorite.find({"userFrom": req.body.userFrom, "movieId": req.body.movieId})
+        .exec((err, info) => {
+            if(err) return res.status(400).send(err)
+
+            const favorited = info.length !== 0 ? true : false;
+
+            res.status(200).json({success: true, favorited})
+        })
+
+})
+
+// Add Favorite
+app.post('/api/favorite/addFavorite', (req, res) => {
+
+    const favorite = new Favorite(req.body);
+
+    favorite.save((err, info) => {
+        if(err) return res.status(400).send(err)
+        res.status(200).json({
+            success: true
+        })
+    })
+})
+
+
+// Remove from Favorite
+app.post('/api/favorite/removeFromFavorite', (req, res) => {
+
+    Favorite.findOneAndDelete({userFrom: req.body.userFrom, movieId: req.body.movieId})
+        .exec((err, info) => {
+            if(err) return res.status(400).send(err)
+            return res.status(200).json({success: true, info})
+        })
+
+
+})
+
+
+// Get Favored Movies
+app.post('/api/favorite/getFavoredMovie', (req, res) => {
+
+    Favorite.find({userFrom: req.body.userFrom})
+        .exec((err, info) => {
+            if (err) return res.status(400).send(err)
+            return res.status(200).json({
+                success: true,
+                favoredMovies: info
+            })
+        })
+
+
+})
 
 
 

@@ -93,6 +93,7 @@ function LandingPage() {
 
                     {Movies && Movies.map((movie, index) => (
                         <GridCards 
+                            landingPage
                             key={movie.id}
                             image={movie.poster_path ? 
                                 `${IMAGE_BASE_URL}w500${movie.poster_path}` : null}
